@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium;
@@ -59,15 +60,61 @@ namespace MSysTest
         public void CorrespondingTrains()
         {           
             LaunchBrowser(POM.URL, POM.PATH_DRIVER, POM.PATH_DOWNLOAD);            
-            WebDriver.FindElement(By.XPath(POM.BUTTON_OK)).Click();
+            WebDriver.FindElement(By.XPath(POM.BUTTON_OK)).Click();            
+            Thread.Sleep(5000);
             var From = WebDriver.FindElement(By.XPath(POM.FROM));
             From.SendKeys("CHENNAI EGMORE - MS");
             var To = WebDriver.FindElement(By.XPath(POM.TO));
-            To.SendKeys("KANYAKUMARI - CAPE");
+            To.SendKeys("KANYAKUMARI - CAPE");           
             WebDriver.FindElement(By.XPath(POM.BUTTON_SEARCH)).Click();
             Thread.Sleep(5000);
-
-          
+            Assert.AreEqual(WebDriver.FindElement(By.XPath(POM.BUTTON_SEARCH)).Text, " MS GURUVAYUR EX (06127)");            
         }
+
+        [TestMethod]
+        public void Test2()
+        {
+            CorrespondingTrains();
+            WebDriver.FindElement(By.XPath(POM.TrainSchedule)).Click();
+            Assert.AreEqual(WebDriver.FindElement(By.XPath(POM.BUTTON_SEARCH)).Text, " MS GURUVAYUR EX (06127)");
+            // xpath of html table
+            var elemTable = WebDriver.FindElement(By.XPath("//*[@id='divMain']/div/app-train-list/p-dialog/div/div/div[2]/app-check-train-schedule/div[2]/div/div[2]"));
+
+            // Fetch all Row of the table
+            List<IWebElement> lstTrElem = new List<IWebElement>(elemTable.FindElements(By.TagName("tr")));
+            String strRowData = "";
+
+            // Traverse each row
+            foreach (var elemTr in lstTrElem)
+            {
+                // Fetch the columns from a particuler row
+                List<IWebElement> lstTdElem = new List<IWebElement>(elemTr.FindElements(By.TagName("td")));
+                if (lstTdElem.Count > 0)
+                {
+                    // Traverse each column
+                    foreach (var elemTd in lstTdElem)
+                    {
+                        // "\t\t" is used for Tab Space between two Text
+                        strRowData = strRowData + elemTd.Text + "\t\t";
+                    }
+                }
+                else
+                {
+                    // To print the data into the console
+                    Console.WriteLine("This is Header Row");
+                    Console.WriteLine(lstTrElem[0].Text.Replace(" ", "\t\t"));
+                }
+                Console.WriteLine(strRowData);
+                strRowData = String.Empty;
+            }
+        }
+
+        [TestCleanup]
+        public void TestCleaup()
+        {                        
+            WebDriver.Close();
+            WebDriver.Quit();
+        }
+
     }
 }
